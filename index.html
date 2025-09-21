@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Girasoles para mi bbita</title>
+<style>
+  :root{
+    --bg:#090814;
+    --petal1:#FFD54A;
+    --petal2:#FFB300;
+  }
+
+  html,body{
+    height:100%;
+    margin:0;
+    background: radial-gradient(1200px 600px at 10% 10%, #0b0a12 0%, #06050a 30%, var(--bg) 100%);
+    overflow:hidden;
+    font-family: "Poppins", sans-serif;
+  }
+
+  .title {
+    position:absolute;
+    left:50%; top:50%;
+    transform:translate(-50%,-50%);
+    text-align:center;
+    font-size: clamp(28px, 6vw, 72px);
+    font-weight:700;
+    color:#ffd65a;
+    text-shadow: 0 0 20px rgba(255,230,120,0.7),
+                 0 0 40px rgba(255,200,80,0.4);
+    z-index:2000;
+    pointer-events:none;
+    animation: glow 3s ease-in-out infinite alternate;
+  }
+
+  @keyframes glow {
+    from { text-shadow: 0 0 12px rgba(255,230,120,0.7); }
+    to   { text-shadow: 0 0 28px rgba(255,230,120,1); }
+  }
+
+  .stage{
+    position:relative;
+    width:100%;
+    height:100%;
+    overflow:hidden;
+  }
+
+  .sunflower{
+    position:absolute;
+    width:120px; height:120px;
+    pointer-events:none;
+    transform-origin:50% 50%;
+  }
+
+  .core{
+    position:absolute;
+    left:50%; top:50%;
+    transform:translate(-50%,-50%);
+    width:36px; height:36px;
+    border-radius:50%;
+    background: radial-gradient(circle at 35% 30%, #6a492b 0%, #3b2a1d 50%, #22170f 100%);
+  }
+
+  .petal{
+    --w: 20px;
+    --h: 60px;
+    position:absolute;
+    left:50%; top:50%;
+    transform-origin:50% calc(50% + 22px);
+    width:var(--w); height:var(--h);
+    margin-left: calc(-1 * var(--w) / 2);
+    margin-top: calc(-1 * var(--h) / 2);
+    border-radius: 30% 30% 50% 50%;
+    background: linear-gradient(180deg, var(--petal1), var(--petal2));
+    opacity:0;
+  }
+
+  @keyframes bloom {
+    0% { transform: scale(0.1) rotate(var(--rot)); opacity:0; }
+    50% { opacity:1; transform: scale(1.05) rotate(var(--rot)); }
+    100% { transform: scale(1) rotate(var(--rot)); opacity:1; }
+  }
+
+  @keyframes fadeAway {
+    0% { opacity:1; }
+    100% { opacity:0; transform: scale(0.9) rotate(calc(var(--rot) + 20deg)); }
+  }
+
+  .sunflower.show .petal{
+    animation-name: bloom;
+    animation-duration: 550ms;
+    animation-fill-mode:forwards;
+  }
+  .sunflower.fade .petal{
+    animation-name: fadeAway;
+    animation-duration: 1000ms;
+    animation-fill-mode:forwards;
+  }
+
+  .sunflower.show .core{
+    animation: bloom 420ms ease-out forwards;
+  }
+  .sunflower.fade .core{
+    animation: fadeAway 1000ms forwards;
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <div class="title">🌻 Girasoles para mi bbita 🌻</div>
+  </div>
+
+<script>
+const stage = document.getElementById('stage');
+
+function createSunflower(x, y, opts = {}) {
+  const countPetals = opts.petals || 12;
+  const size = opts.size || 120;
+  const sf = document.createElement('div');
+  sf.className = 'sunflower';
+  sf.style.width = size + 'px';
+  sf.style.height = size + 'px';
+  sf.style.left = (x - size/2) + 'px';
+  sf.style.top = (y - size/2) + 'px';
+  const baseRotate = Math.random()*360;
+
+  for (let i=0;i<countPetals;i++){
+    const angle = (360/countPetals) * i;
+    const pet = document.createElement('div');
+    pet.className = 'petal';
+    pet.style.setProperty('--rot', angle + 'deg');
+    sf.appendChild(pet);
+  }
+
+  const core = document.createElement('div');
+  core.className = 'core';
+  sf.appendChild(core);
+
+  stage.appendChild(sf);
+
+  requestAnimationFrame(()=> {
+    sf.classList.add('show');
+    setTimeout(()=> {
+      sf.classList.add('fade');
+      setTimeout(()=> { sf.remove(); }, 1200);
+    }, 1000);
+  });
+}
+
+function burstAt(x,y, amount) {
+  for (let i=0;i<amount;i++){
+    const angle = Math.random() * Math.PI*2;
+    const radius = 20 + Math.random()*80;
+    const nx = x + Math.cos(angle)*radius;
+    const ny = y + Math.sin(angle)*radius;
+    const petals = Math.floor(8 + Math.random()*16);
+    const size = Math.floor(70 + Math.random()*90);
+    createSunflower(nx, ny, {petals, size});
+  }
+}
+
+// lanzar explosión inicial al centro
+window.onload = ()=>{
+  const rect = stage.getBoundingClientRect();
+  burstAt(rect.width/2, rect.height/2, 10);
+  ambient();
+};
+
+// explosiones automáticas
+function ambient(){
+  const rect = stage.getBoundingClientRect();
+  const nx = rect.width * (0.2 + Math.random()*0.6);
+  const ny = rect.height * (0.2 + Math.random()*0.6);
+  burstAt(nx, ny, 8 + Math.floor(Math.random()*6));
+  setTimeout(ambient, 2000 + Math.random()*2000);
+}
+
+// explosión al hacer click
+stage.addEventListener('click', (e)=>{
+  burstAt(e.clientX, e.clientY, 12);
+});
+</script>
+</body>
+</html>
